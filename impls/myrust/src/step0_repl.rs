@@ -25,7 +25,7 @@ fn read() -> Option<String> {
             }
         },
         Err(e) => {
-            writeln!(io::stderr(), "error: {}", e).unwrap();
+            eprintln!("error: {}", e);
             None
         },
     }
