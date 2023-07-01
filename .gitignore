@@ -22,3 +22,6 @@ GRTAGS
 logs
 old
 tmp/
+impls/myrust/target
+impls/myrust/.idea
+impls/.vscode
