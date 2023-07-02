@@ -1,33 +1,26 @@
+use std::error::Error;
 use std::io::{self, Write};
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     loop {
-        match read() {
-            Some(input) => {
-                let ret = eval(&input);
-                print(&ret);
-            },
+        let input = match read()? {
+            Some(s) => s,
             None => break,
-        }
+        };
+        let ret = eval(&input);
+        print(&ret);
     }
+    Ok(())
 }
 
-fn read() -> Option<String> {
+fn read() -> Result<Option<String>, io::Error> {
     print!("user> ");
     io::stdout().flush().unwrap();
     let mut input = String::new();
-    match io::stdin().read_line(&mut input) {
-        Ok(n_bytes) => {
-            if n_bytes == 0 {
-                None
-            } else {
-                Some(input)
-            }
-        },
-        Err(e) => {
-            eprintln!("error: {}", e);
-            None
-        },
+    if io::stdin().read_line(&mut input)? == 0 {
+        Ok(None)
+    } else {
+        Ok(Some(input))
     }
 }
 
