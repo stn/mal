@@ -4,8 +4,8 @@ fn main() {
     loop {
         match read() {
             Some(input) => {
-                let ret = eval(&input[..]);
-                print(&ret[..]);
+                let ret = eval(&input);
+                print(&ret);
             },
             None => break,
         }
