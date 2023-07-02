@@ -17,11 +17,11 @@ fn read() -> Result<Option<String>, io::Error> {
     print!("user> ");
     io::stdout().flush().unwrap();
     let mut input = String::new();
-    if io::stdin().read_line(&mut input)? == 0 {
-        Ok(None)
+    Ok(if io::stdin().read_line(&mut input)? == 0 {
+        None
     } else {
-        Ok(Some(input))
-    }
+        Some(input)
+    })
 }
 
 fn eval(s: &str) -> String {
