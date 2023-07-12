@@ -1,8 +1,8 @@
 import sys
 
 
-def mal_read() -> str:
-    return input("user> ")
+def mal_read(prompt="user> ") -> str:
+    return input(prompt)
 
 
 def mal_eval(exp: str) -> str:
