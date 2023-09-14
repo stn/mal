@@ -6,13 +6,14 @@ from enum import Enum
 class MalType(Enum):
     """Mal Type"""
 
-    INTEGER = "INTEGER"
     FLOAT = "FLOAT"
+    HASHMAP = "HASHMAP"
+    INTEGER = "INTEGER"
+    KEYWORD = "KEYWORD"
+    LIST = "LIST"
     STRING = "STRING"
     SYMBOL = "SYMBOL"
-    LIST = "LIST"
     VECTOR = "VECTOR"
-    HASHMAP = "HASHMAP"
 
 
 class MalObject:

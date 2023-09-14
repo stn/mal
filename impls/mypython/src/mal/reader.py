@@ -51,7 +51,7 @@ def tokenize(s: str) -> List[str]:
 
 
 def read_sequence(reader: Reader, start: str, end: str) -> MalObject:
-    """Read sequence."""
+    """Read a sequence."""
     assert next(reader) == start
     ret = []
     token = reader.peek()
@@ -65,17 +65,17 @@ def read_sequence(reader: Reader, start: str, end: str) -> MalObject:
 
 
 def read_list(reader: Reader) -> MalObject:
-    """Read list."""
+    """Read a list."""
     return MalObject(MalType.LIST, read_sequence(reader, "(", ")"))
 
 
 def read_vector(reader: Reader) -> MalObject:
-    """Read vector."""
+    """Read a vector."""
     return MalObject(MalType.VECTOR, read_sequence(reader, "[", "]"))
 
 
 def read_hashmap(reader: Reader) -> MalObject:
-    """Read hashmap."""
+    """Read a hashmap."""
     return MalObject(MalType.HASHMAP, read_sequence(reader, "{", "}"))
 
 
@@ -100,12 +100,16 @@ def read_quote(reader: Reader) -> MalObject:
 
 
 def read_atom(reader: Reader) -> MalObject:
-    """Read atom."""
+    """Read an atom."""
     token = next(reader)
     if token[0] == '"':
         if len(token) == 1 or token[-1] != '"':
             raise SyntaxError(f"unexpected EOF while reading. expected '\"', got '{token}'")
         return MalObject(MalType.STRING, _unescape(token[1:-1]))
+    if token[0] == ":":
+        if len(token) == 1:
+            raise SyntaxError(f"unexpected EOF while reading. got '{token}'")
+        return MalObject(MalType.KEYWORD, token[1:])
     if NUMBER_PAT.match(token):
         try:
             return MalObject(MalType.INTEGER, int(token))
