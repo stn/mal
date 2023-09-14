@@ -25,3 +25,9 @@ class MalObject:
 
     def __repr__(self):
         return f"MalObject({self.mal_type}, {self.value})"
+
+
+# Special objects
+true = MalObject(MalType.SYMBOL, "true")
+false = MalObject(MalType.SYMBOL, "false")
+nil = MalObject(MalType.SYMBOL, "nil")
