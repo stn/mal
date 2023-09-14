@@ -6,7 +6,7 @@ from mal.reader import read_str
 from mal.printer import pr_str
 
 
-def mal_read(s: str) -> str:
+def mal_read(s: str) -> MalObject:
     return read_str(s)
 
 

@@ -142,7 +142,7 @@ def read_from(reader: Reader):
             return read_atom(reader)
 
 
-def read_str(s: str):
+def read_str(s: str) -> MalObject:
     """Read string."""
     tokens = tokenize(s)
     return read_from(Reader(tokens))
