@@ -11,6 +11,8 @@ class MalType(Enum):
     STRING = "STRING"
     SYMBOL = "SYMBOL"
     LIST = "LIST"
+    VECTOR = "VECTOR"
+    HASHMAP = "HASHMAP"
 
 
 class MalObject:

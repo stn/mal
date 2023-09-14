@@ -29,3 +29,4 @@ impls/mypython/.venv
 impls/mypython/dist
 impls/mypython/src/mypython.egg-info
 impls/mypython/.idea
+.vscode

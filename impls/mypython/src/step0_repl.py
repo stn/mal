@@ -1,8 +1,8 @@
 import sys
 
 
-def mal_read(prompt="user> ") -> str:
-    return input(prompt)
+def mal_read(s: str) -> str:
+    return s
 
 
 def mal_eval(exp: str) -> str:
@@ -21,8 +21,9 @@ if __name__ == "__main__":
     while True:
         s = ""
         try:
-            s = mal_read()
+            s = input("user> ")
         except EOFError:
             mal_quit()
+        s = mal_read(s)
         ret = mal_eval(s)
         mal_print(ret)

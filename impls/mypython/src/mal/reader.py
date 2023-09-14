@@ -50,26 +50,62 @@ def tokenize(s: str) -> List[str]:
     return re.findall(TOKEN_PAT, s)
 
 
-def read_list(reader: Reader) -> MalObject:
-    """Read list."""
-    assert next(reader) == "("
+def read_sequence(reader: Reader, start: str, end: str) -> MalObject:
+    """Read sequence."""
+    assert next(reader) == start
     ret = []
     token = reader.peek()
-    while token != ")":
+    while token != end:
         if token is None:
             raise SyntaxError("unexpected EOF while reading")
         ret.append(read_from(reader))
         token = reader.peek()
     next(reader)
-    return MalObject(MalType.LIST, ret)
+    return ret
+
+
+def read_list(reader: Reader) -> MalObject:
+    """Read list."""
+    return MalObject(MalType.LIST, read_sequence(reader, "(", ")"))
+
+
+def read_vector(reader: Reader) -> MalObject:
+    """Read vector."""
+    return MalObject(MalType.VECTOR, read_sequence(reader, "[", "]"))
+
+
+def read_hashmap(reader: Reader) -> MalObject:
+    """Read hashmap."""
+    return MalObject(MalType.HASHMAP, read_sequence(reader, "{", "}"))
+
+
+def _unescape(s: str) -> str:
+    t = (s.replace(r"\\", "\u029e")
+         .replace(r'\"', '"')
+         .replace(r"\n", "\n")
+         # .replace(r"\t", "\t")
+         # .replace(r"\r", "\r")
+         # .replace(r"\b", "\b")
+         # .replace(r"\f", "\f")
+         )
+    if t.find("\\") >= 0:
+        raise SyntaxError(f"unbalanced \\ \"{s}\"")
+    return t.replace("\u029e", "\\")
+
+
+def read_quote(reader: Reader) -> MalObject:
+    """Read quote."""
+    assert next(reader) == "'"
+    return MalObject(MalType.LIST, [MalObject(MalType.SYMBOL, "quote"), read_from(reader)])
 
 
 def read_atom(reader: Reader) -> MalObject:
     """Read atom."""
     token = next(reader)
-    if token.startswith('"'):
-        # TODO: unescape the string
-        return MalObject(MalType.STRING, token[1:-1])
+    if token[0] == '"':
+        if len(token) == 1 or token[-1] != '"':
+            raise SyntaxError(f"unexpected EOF while reading. expected '\"', got '{token}'")
+        return MalObject(MalType.STRING, _unescape(token[1:-1]))
     if NUMBER_PAT.match(token):
         try:
             return MalObject(MalType.INTEGER, int(token))
@@ -87,8 +123,18 @@ def read_from(reader: Reader):
         token = reader.peek()
         if token == "(":
             return read_list(reader)
+        if token == "[":
+            return read_vector(reader)
+        if token == "{":
+            return read_hashmap(reader)
         elif token == ")":
-            raise SyntaxError("unexpected )")
+            raise SyntaxError("unbalanced )")
+        elif token == "]":
+            raise SyntaxError("unbalanced ]")
+        elif token == "}":
+            raise SyntaxError("unbalanced }")
+        elif token == "'":
+            return read_quote(reader)
         elif token[0] == ";":
             next(reader)
             continue
