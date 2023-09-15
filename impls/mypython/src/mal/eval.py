@@ -1,6 +1,6 @@
 """Mal Eval"""
 
-from .types import MalObject, MalType
+from .types import MalObject, MalType, nil
 from .env import Env
 
 
@@ -59,6 +59,12 @@ def mal_eval(exp: MalObject, env) -> MalObject:
                     raise SyntaxError("binding form must be a symbol")
                 new_env[exp.value[1].value[i].value] = mal_eval(exp.value[1].value[i + 1], new_env)
             return mal_eval(exp.value[2], new_env)
+        if exp.value[0].value == "do":
+            if len(exp.value) == 1:
+                return nil
+            for v in exp.value[1:-1]:
+                mal_eval(v, env)
+            return mal_eval(exp.value[-1], env)
         # Function call
         evaluated = eval_ast(exp, env)
         return mal_apply(evaluated.value[0], *evaluated.value[1:])
