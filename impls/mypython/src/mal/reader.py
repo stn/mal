@@ -3,7 +3,7 @@
 import re
 from typing import List, Optional
 
-from .types import MalObject, MalType
+from .types import MalObject, MalType, nil, true, false
 
 
 TOKEN_PAT = re.compile(r"""[\s,]*(~@|[\[\]{}()'`~^@]|"(?:[\\].|[^\\"])*"?|;.*|[^\s\[\]{}()'"`@,;]+)""")
@@ -118,6 +118,13 @@ def read_atom(reader: Reader) -> MalObject:
                 return MalObject(MalType.FLOAT, float(token))
             except ValueError:
                 raise SyntaxError(f"invalid number: {token}")
+    if token == "true":
+        return true
+    if token == "false":
+        return false
+    # In mal, nil and false are different.
+    if token == "nil":
+        return nil
     return MalObject(MalType.SYMBOL, token)
 
 
