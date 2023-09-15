@@ -7,6 +7,7 @@ class MalType(Enum):
     """Mal Type"""
 
     FLOAT = "FLOAT"
+    FUNCTION = "FUNCTION"
     HASHMAP = "HASHMAP"
     INTEGER = "INTEGER"
     KEYWORD = "KEYWORD"

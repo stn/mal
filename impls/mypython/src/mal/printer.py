@@ -22,4 +22,6 @@ def pr_str(mal_object: MalObject, print_readably: bool = True):
         return f"[{' '.join([pr_str(x) for x in mal_object.value])}]"
     elif mal_object.mal_type == MalType.HASHMAP:
         return f"{{{' '.join([pr_str(x) for x in mal_object.value])}}}"
+    elif mal_object.mal_type == MalType.FUNCTION:
+        return f"<function {mal_object.value}>"
     return str(mal_object.value)
