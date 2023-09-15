@@ -25,6 +25,13 @@ def eval_ast(ast: MalObject, env: dict) -> MalObject:
     return ast
 
 
+def mal_apply(func, *args):
+    """Apply func to args."""
+    if callable(func):
+        return func(*args)
+    raise TypeError(f"{func} is not callable")
+
+
 def mal_eval(exp: MalObject, env) -> MalObject:
     """Evaluate exp with env."""
     if exp.mal_type == MalType.LIST:
@@ -54,5 +61,5 @@ def mal_eval(exp: MalObject, env) -> MalObject:
             return mal_eval(exp.value[2], new_env)
         # Function call
         evaluated = eval_ast(exp, env)
-        return evaluated.value[0](*evaluated.value[1:])
+        return mal_apply(evaluated.value[0], *evaluated.value[1:])
     return eval_ast(exp, env)
