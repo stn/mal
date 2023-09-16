@@ -1,18 +1,12 @@
 import sys
 import traceback
 
-from mal.types import MalObject, MalType
+from mal.core import core_env
+from mal.types import MalObject
 from mal.eval import mal_eval
+from mal.env import Env
 from mal.reader import read_str
 from mal.printer import pr_str
-
-
-REPL_ENV = {
-    "+": lambda a, b: MalObject(MalType.INTEGER, a.value + b.value),
-    "-": lambda a, b: MalObject(MalType.INTEGER, a.value - b.value),
-    "*": lambda a, b: MalObject(MalType.INTEGER, a.value * b.value),
-    "/": lambda a, b: MalObject(MalType.INTEGER, int(a.value / b.value)),
-}
 
 
 def mal_read(s: str) -> MalObject:
@@ -20,25 +14,32 @@ def mal_read(s: str) -> MalObject:
 
 
 def mal_print(exp: MalObject) -> str:
-    return pr_str(exp)
+    return pr_str(exp, print_readably=True)
 
 
 def mal_quit():
     sys.exit(0)
 
 
-def mal_rep(s: str) -> str:
-    return mal_print(mal_eval(REPL_ENV, mal_read(s)))
+def mal_rep(s: str, env: Env) -> str:
+    return mal_print(mal_eval(env, mal_read(s)))
+
+
+def prelude(env: Env):
+    mal_rep("(def! not (fn* (a) (if a false true)))", env)
 
 
 if __name__ == "__main__":
+    env = core_env()
+    prelude(env)
     while True:
         try:
             line = input("user> ")
             if line == "":
                 continue
-            print(mal_rep(line))
+            print(mal_rep(line, env))
         except EOFError:
             mal_quit()
         except Exception as e:
+            print(e)
             print("".join(traceback.format_exception(*sys.exc_info())))

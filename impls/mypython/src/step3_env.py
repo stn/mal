@@ -21,7 +21,7 @@ def mal_quit():
 
 
 def mal_rep(s: str, env: Env) -> str:
-    return mal_print(mal_eval(mal_read(s), env))
+    return mal_print(mal_eval(env, mal_read(s)))
 
 
 def create_env() -> Env:
