@@ -99,6 +99,15 @@ def read_quote(reader: Reader) -> MalObject:
     return MalObject(MalType.LIST, [MalObject(MalType.SYMBOL, "quote"), read_from(reader)])
 
 
+def read_deref(reader: Reader) -> MalObject:
+    """Read deref."""
+    assert next(reader) == "@"
+    token = read_atom(reader)
+    if token.mal_type != MalType.SYMBOL:
+        raise SyntaxError(f"unexpected token: {token} after @")
+    return MalObject(MalType.LIST, [MalObject(MalType.SYMBOL, "deref"), token])
+
+
 def read_atom(reader: Reader) -> MalObject:
     """Read an atom."""
     token = next(reader)
@@ -146,6 +155,8 @@ def read_from(reader: Reader):
             raise SyntaxError("unbalanced }")
         elif token == "'":
             return read_quote(reader)
+        elif token == "@":
+            return read_deref(reader)
         elif token[0] == ";":
             next(reader)
             continue

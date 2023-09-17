@@ -1,10 +1,12 @@
 """Mal Core"""
 
-from typing import List
+from typing import List, Union
 
 from .env import Env
-from .types import MalObject, MalType, true, false, nil
+from .eval import mal_apply
+from .types import MalAtom, MalObject, MalType, true, false, nil
 from .printer import pr_str
+from .reader import read_str
 
 
 CORE_ENV = Env()
@@ -139,6 +141,52 @@ CORE_ENV["pr-str"] = mal_pr_str
 CORE_ENV["str"] = mal_str
 CORE_ENV["prn"] = mal_prn
 CORE_ENV["println"] = mal_println
+
+
+# Reader
+def mal_read_str(s: Union[str, MalObject]) -> MalObject:
+    """Read string."""
+    if isinstance(s, MalObject):
+        return read_str(s.value)
+    return read_str(s)
+
+
+def mal_slurp(filename: Union[str, MalObject]) -> MalObject:
+    """Read file."""
+    if isinstance(filename, MalObject):
+        filename = filename.value
+    with open(filename, "r") as f:
+        return MalObject(MalType.STRING, f.read())
+
+
+CORE_ENV["read-string"] = mal_read_str
+CORE_ENV["slurp"] = mal_slurp
+
+
+# Atom
+
+def mal_atom(x: MalObject) -> MalObject:
+    """Create atom."""
+    return MalAtom(x)
+
+
+def mal_reset(a: MalAtom, new_value: MalObject) -> MalObject:
+    """Reset atom."""
+    a.reset(new_value)
+    return a.deref()
+
+
+def mal_swap(a: MalAtom, fn: MalObject, *args: List[MalObject]) -> MalObject:
+    """Swap atom with the given fn result."""
+    a.reset(mal_apply(fn, a.deref(), *args))
+    return a.deref()
+
+
+CORE_ENV["atom"] = mal_atom
+CORE_ENV["atom?"] = lambda a: true if a.mal_type == MalType.ATOM else false
+CORE_ENV["deref"] = lambda a: a.deref()
+CORE_ENV["reset!"] = mal_reset
+CORE_ENV["swap!"] = mal_swap
 
 
 def core_env() -> Env:

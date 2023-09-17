@@ -24,4 +24,6 @@ def pr_str(mal_object: MalObject, print_readably: bool = True) -> str:
         return f"{{{' '.join([pr_str(x, print_readably=print_readably) for x in mal_object.value])}}}"
     elif mal_object.mal_type == MalType.FUNCTION:
         return f"<function {mal_object.value}>"
+    elif mal_object.mal_type == MalType.ATOM:
+        return f"(atom {pr_str(mal_object.value, print_readably=print_readably)})"
     return str(mal_object.value)

@@ -25,7 +25,7 @@ def eval_ast(env: dict, ast: MalObject) -> MalObject:
     return ast
 
 
-def mal_apply(env, func, *args):
+def mal_apply(func, *args):
     """Apply func to args."""
     if callable(func):
         return func(*args)
