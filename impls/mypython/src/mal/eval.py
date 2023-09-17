@@ -50,7 +50,9 @@ def mal_apply(env, func, *args):
 
 def mal_eval(env, exp: MalObject) -> MalObject:
     """Evaluate exp with env."""
-    if exp.mal_type == MalType.LIST:
+    while True:
+        if exp.mal_type != MalType.LIST:
+            return eval_ast(env, exp)
         if len(exp.value) == 0:
             return exp
         # Special forms
@@ -74,22 +76,35 @@ def mal_eval(env, exp: MalObject) -> MalObject:
                 if exp.value[1].value[i].mal_type != MalType.SYMBOL:
                     raise SyntaxError("binding form must be a symbol")
                 new_env[exp.value[1].value[i].value] = mal_eval(new_env, exp.value[1].value[i + 1])
-            return mal_eval(new_env, exp.value[2])
+            # TCO
+            # original: return mal_eval(new_env, exp.value[2])
+            env = new_env
+            exp = exp.value[2]
+            continue
         if exp.value[0].value == "do":
             if len(exp.value) == 1:
                 return nil
             for v in exp.value[1:-1]:
                 mal_eval(env, v)
-            return mal_eval(env, exp.value[-1])
+            # TCO
+            # original: return mal_eval(env, exp.value[-1])
+            exp = exp.value[-1]
+            continue
         if exp.value[0].value == "if":
             if len(exp.value) < 3 or len(exp.value) > 4:
                 raise SyntaxError("wrong number of arguments")
             condition = mal_eval(env, exp.value[1])
             if condition == false or condition == nil:
                 if len(exp.value) == 4:
-                    return mal_eval(env, exp.value[3])
+                    # TCO
+                    # original: return mal_eval(env, exp.value[3])
+                    exp = exp.value[3]
+                    continue
                 return nil
-            return mal_eval(env, exp.value[2])
+            # TCO
+            # original: return mal_eval(env, exp.value[2])
+            exp = exp.value[2]
+            continue
         if exp.value[0].value == "fn*":
             if len(exp.value) != 3:
                 raise SyntaxError("wrong number of arguments")
@@ -99,5 +114,29 @@ def mal_eval(env, exp: MalObject) -> MalObject:
             return MalObject(MalType.FUNCTION, (new_env, exp.value[1], exp.value[2]))
         # Function call
         evaluated = eval_ast(env, exp)
-        return mal_apply(env, evaluated.value[0], *evaluated.value[1:])
-    return eval_ast(env, exp)
+        func = evaluated.value[0]
+        args = evaluated.value[1:]
+        # return mal_apply(env, func, *args)
+        if callable(func):
+            return func(*args)
+        if func.mal_type == MalType.FUNCTION:
+            new_env = Env(outer=func.value[0])
+            i = 0
+            is_rest = False
+            for x in func.value[1].value:
+                if x.mal_type != MalType.SYMBOL:
+                    raise SyntaxError(f"{x} is not a symbol")
+                if is_rest:
+                    new_env[x.value] = MalObject(MalType.LIST, args[i:])
+                    break
+                if x.value == "&":
+                    is_rest = True
+                    continue
+                new_env[x.value] = args[i]
+                i += 1
+            # TCO
+            # original: return mal_eval(new_env, func.value[2])
+            env = new_env
+            exp = func.value[2]
+            continue
+        raise TypeError(f"{func} is not callable")
