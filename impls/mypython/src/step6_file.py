@@ -2,7 +2,7 @@ import sys
 import traceback
 
 from mal.core import core_env
-from mal.types import MalObject
+from mal.types import MalObject, MalType
 from mal.eval import mal_eval
 from mal.env import Env
 from mal.reader import read_str
@@ -34,6 +34,17 @@ def prelude(env: Env):
 if __name__ == "__main__":
     env = core_env()
     prelude(env)
+
+    args = MalObject(MalType.LIST, [MalObject(MalType.STRING, x) for x in sys.argv[2:]])
+    env["*ARGV*"] = args
+    if len(sys.argv) > 1:
+        try:
+            mal_rep(f"(load-file \"{sys.argv[1]}\")", env)
+        except Exception as e:
+            print(e)
+            #print("".join(traceback.format_exception(*sys.exc_info())))
+        mal_quit()
+
     while True:
         try:
             line = input("user> ")
@@ -44,4 +55,4 @@ if __name__ == "__main__":
             mal_quit()
         except Exception as e:
             print(e)
-            print("".join(traceback.format_exception(*sys.exc_info())))
+            #print("".join(traceback.format_exception(*sys.exc_info())))
