@@ -58,7 +58,7 @@ def read_sequence(reader: Reader, start: str, end: str) -> MalObject:
     while token != end:
         if token is None:
             raise SyntaxError("unexpected EOF while reading")
-        ret.append(read_from(reader))
+        ret.append(read_form(reader))
         token = reader.peek()
     next(reader)
     return ret
@@ -96,7 +96,25 @@ def _unescape(s: str) -> str:
 def read_quote(reader: Reader) -> MalObject:
     """Read quote."""
     assert next(reader) == "'"
-    return MalObject(MalType.LIST, [MalObject(MalType.SYMBOL, "quote"), read_from(reader)])
+    return MalObject(MalType.LIST, [MalObject(MalType.SYMBOL, "quote"), read_form(reader)])
+
+
+def read_quasiquote(reader: Reader) -> MalObject:
+    """Read quasiquote."""
+    assert next(reader) == "`"
+    return MalObject(MalType.LIST, [MalObject(MalType.SYMBOL, "quasiquote"), read_form(reader)])
+
+
+def read_unquote(reader: Reader) -> MalObject:
+    """Read unquote."""
+    assert next(reader) == "~"
+    return MalObject(MalType.LIST, [MalObject(MalType.SYMBOL, "unquote"), read_form(reader)])
+
+
+def read_splice_unquote(reader: Reader) -> MalObject:
+    """Read splice-unquote."""
+    assert next(reader) == "~@"
+    return MalObject(MalType.LIST, [MalObject(MalType.SYMBOL, "splice-unquote"), read_form(reader)])
 
 
 def read_deref(reader: Reader) -> MalObject:
@@ -137,7 +155,7 @@ def read_atom(reader: Reader) -> MalObject:
     return MalObject(MalType.SYMBOL, token)
 
 
-def read_from(reader: Reader):
+def read_form(reader: Reader):
     """Read from reader."""
     while True:
         token = reader.peek()
@@ -155,6 +173,12 @@ def read_from(reader: Reader):
             raise SyntaxError("unbalanced }")
         elif token == "'":
             return read_quote(reader)
+        elif token == "`":
+            return read_quasiquote(reader)
+        elif token == "~":
+            return read_unquote(reader)
+        elif token == "~@":
+            return read_splice_unquote(reader)
         elif token == "@":
             return read_deref(reader)
         elif token[0] == ";":
@@ -167,4 +191,4 @@ def read_from(reader: Reader):
 def read_str(s: str) -> MalObject:
     """Read string."""
     tokens = tokenize(s)
-    return read_from(Reader(tokens))
+    return read_form(Reader(tokens))

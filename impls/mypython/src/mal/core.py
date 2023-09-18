@@ -23,8 +23,6 @@ CORE_ENV["*"] = lambda a, b: MalObject(MalType.INTEGER, a.value * b.value)
 CORE_ENV["/"] = lambda a, b: MalObject(MalType.INTEGER, int(a.value / b.value))
 
 # List
-CORE_ENV["list"] = lambda *args: MalObject(MalType.LIST, list(args))
-CORE_ENV["list?"] = lambda a: true if a.mal_type == MalType.LIST else false  # nil is not a list
 
 
 def mal_empty_p(a: MalObject) -> bool:
@@ -34,9 +32,6 @@ def mal_empty_p(a: MalObject) -> bool:
         if len(a.value) == 0:
             return true
     return false
-
-
-CORE_ENV["empty?"] = mal_empty_p
 
 
 def mal_count_p(a: MalObject) -> int:
@@ -50,7 +45,41 @@ def mal_count_p(a: MalObject) -> int:
     raise TypeError(f"{a} is not a sequence")
 
 
+def mal_cons(a: MalObject, b: MalObject) -> MalObject:
+    if b == nil:
+        return MalObject(MalType.LIST, [a])
+    if b.mal_type == MalType.LIST or b.mal_type == MalType.VECTOR:
+        return MalObject(MalType.LIST, [a] + b.value)
+    # if b.mal_type == MalType.VECTOR:
+    #     return MalObject(MalType.VECTOR, [a] + b.value)
+    raise TypeError(f"{b} is not a sequence")
+
+
+def mal_concat(*args: List[MalObject]) -> MalObject:
+    lst = []
+    for arg in args:
+        if arg.mal_type == MalType.LIST or arg.mal_type == MalType.VECTOR:
+            lst += arg.value
+        else:
+            raise TypeError(f"{arg} is not a sequence")
+    return MalObject(MalType.LIST, lst)
+
+
+def mal_vec(a: MalObject) -> MalObject:
+    if a.mal_type == MalType.LIST:
+        return MalObject(MalType.VECTOR, a.value)
+    if a.mal_type == MalType.VECTOR:
+        return a
+    raise TypeError(f"{a} is not a sequence")
+
+
+CORE_ENV["list"] = lambda *args: MalObject(MalType.LIST, list(args))
+CORE_ENV["list?"] = lambda a: true if a.mal_type == MalType.LIST else false  # nil is not a list
+CORE_ENV["empty?"] = mal_empty_p
 CORE_ENV["count"] = mal_count_p
+CORE_ENV["cons"] = mal_cons
+CORE_ENV["concat"] = mal_concat
+CORE_ENV["vec"] = mal_vec
 
 
 # Comparison

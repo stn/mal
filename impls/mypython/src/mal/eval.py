@@ -1,7 +1,53 @@
 """Mal Eval"""
 
-from .types import MalObject, MalType, false, nil
+from .types import MalObject, MalType, true, false, nil
 from .env import Env
+
+
+def mal_quasiquote(ast: MalObject) -> MalObject:
+    """Quasiquote ast."""
+    if ast.mal_type == MalType.INTEGER or ast.mal_type == MalType.FLOAT:
+        return ast
+    # TODO: special object type for true, false, nil
+    if ast == nil or ast == false or ast == true:
+        return ast
+    if ast.mal_type == MalType.LIST:
+        if len(ast.value) == 0:
+            return ast
+        if ast.value[0].value == "unquote":
+            if len(ast.value) != 2:
+                raise SyntaxError("wrong number of arguments")
+            return ast.value[1]
+        ret = MalObject(MalType.LIST, [])
+        for elem in reversed(ast.value):
+            if elem.mal_type == MalType.LIST:
+                if len(elem.value) == 0:
+                    ret = MalObject(MalType.LIST, [MalObject(MalType.SYMBOL, "cons"), elem, ret])
+                    continue
+                if elem.value[0].value == "splice-unquote":
+                    if len(elem.value) != 2:
+                        raise SyntaxError("wrong number of arguments")
+                    ret = MalObject(MalType.LIST, [MalObject(MalType.SYMBOL, "concat"), elem.value[1], ret])
+                    continue
+            ret = MalObject(MalType.LIST, [MalObject(MalType.SYMBOL, "cons"), mal_quasiquote(elem), ret])
+        return ret
+    if ast.mal_type == MalType.VECTOR:
+        # if len(ast.value) == 0:
+        #     return ast
+        ret = MalObject(MalType.LIST, [])
+        for elem in reversed(ast.value):
+            if elem.mal_type == MalType.LIST:
+                if len(elem.value) == 0:
+                    ret = MalObject(MalType.LIST, [MalObject(MalType.SYMBOL, "cons"), elem, ret])
+                    continue
+                if elem.value[0].value == "splice-unquote":
+                    if len(elem.value) != 2:
+                        raise SyntaxError("wrong number of arguments")
+                    ret = MalObject(MalType.LIST, [MalObject(MalType.SYMBOL, "concat"), elem.value[1], ret])
+                    continue
+            ret = MalObject(MalType.LIST, [MalObject(MalType.SYMBOL, "cons"), mal_quasiquote(elem), ret])
+        return MalObject(MalType.LIST, [MalObject(MalType.SYMBOL, "vec"), ret])
+    return MalObject(MalType.LIST, [MalObject(MalType.SYMBOL, "quote"), ast])
 
 
 def eval_ast(env: dict, ast: MalObject) -> MalObject:
@@ -112,6 +158,21 @@ def mal_eval(env, exp: MalObject) -> MalObject:
                 raise SyntaxError("second argument must be a list or vector")
             new_env = Env(outer=env)
             return MalObject(MalType.FUNCTION, (new_env, exp.value[1], exp.value[2]))
+        if exp.value[0].value == "quote":
+            if len(exp.value) != 2:
+                raise SyntaxError("wrong number of arguments")
+            return exp.value[1]
+        if exp.value[0].value == "quasiquote":
+            if len(exp.value) != 2:
+                raise SyntaxError("wrong number of arguments")
+            # TCO
+            # original: return mal_quasiquote(exp.value[1])
+            exp = mal_quasiquote(exp.value[1])
+            continue
+        if exp.value[0].value == "quasiquoteexpand":
+            if len(exp.value) != 2:
+                raise SyntaxError("wrong number of arguments")
+            return mal_quasiquote(exp.value[1])
         # Function call
         evaluated = eval_ast(env, exp)
         func = evaluated.value[0]
