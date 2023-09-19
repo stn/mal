@@ -1,4 +1,13 @@
-STEPS = step0_repl.py step1_read_print.py step2_eval.py step3_env.py step4_if_fn_do.py step5_tco.py step6_file.py
+STEPS = \
+	step0_repl.py \
+	step1_read_print.py \
+	step2_eval.py \
+	step3_env.py \
+	step4_if_fn_do.py \
+	step5_tco.py \
+	step6_file.py \
+	step7_quote.py \
+	step8_macros.py
 
 all: $(STEPS)
 	true

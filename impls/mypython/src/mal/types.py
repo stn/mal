@@ -21,12 +21,13 @@ class MalType(Enum):
 class MalObject:
     """Mal Object"""
 
-    def __init__(self, mal_type, value):
+    def __init__(self, mal_type, value, is_macro_call=False):
         self._mal_type = mal_type
         self._value = value
+        self._is_macro_call = is_macro_call
 
     def __repr__(self):
-        return f"MalObject({self._mal_type}, {self._value})"
+        return f"MalObject({self._mal_type}, {self._value}, {self._is_macro_call})"
 
     @property
     def mal_type(self):
@@ -37,6 +38,11 @@ class MalObject:
     def value(self):
         """Value"""
         return self._value
+
+    @property
+    def is_macro_call(self):
+        """Is macro call"""
+        return self._is_macro_call
 
 
 # Special objects

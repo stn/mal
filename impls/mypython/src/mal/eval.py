@@ -83,7 +83,7 @@ def mal_apply(func, *args):
             if x.mal_type != MalType.SYMBOL:
                 raise SyntaxError(f"{x} is not a symbol")
             if is_rest:
-                new_env[x.value] = MalObject(MalType.LIST, args[i:])
+                new_env[x.value] = MalObject(MalType.LIST, list(args[i:]))
                 break
             if x.value == "&":
                 is_rest = True
@@ -97,6 +97,7 @@ def mal_apply(func, *args):
 def mal_eval(env, exp: MalObject) -> MalObject:
     """Evaluate exp with env."""
     while True:
+        exp = mal_macroexpand(env, exp)
         if exp.mal_type != MalType.LIST:
             return eval_ast(env, exp)
         if len(exp.value) == 0:
@@ -110,6 +111,17 @@ def mal_eval(env, exp: MalObject) -> MalObject:
             val = mal_eval(env, exp.value[2])
             env[exp.value[1].value] = val
             return val
+        if exp.value[0].value == "defmacro!":
+            if len(exp.value) != 3:
+                raise SyntaxError("wrong number of arguments")
+            if exp.value[1].mal_type != MalType.SYMBOL:
+                raise SyntaxError("first argument must be a symbol")
+            val = mal_eval(env, exp.value[2])
+            if val.mal_type != MalType.FUNCTION:
+                raise SyntaxError("second argument must be a function")
+            macro = MalObject(MalType.FUNCTION, val.value, is_macro_call=True)
+            env[exp.value[1].value] = macro
+            return nil
         if exp.value[0].value == "let*":
             if len(exp.value) != 3:
                 raise SyntaxError("wrong number of arguments")
@@ -173,6 +185,10 @@ def mal_eval(env, exp: MalObject) -> MalObject:
             if len(exp.value) != 2:
                 raise SyntaxError("wrong number of arguments")
             return mal_quasiquote(exp.value[1])
+        if exp.value[0].value == "macroexpand":
+            if len(exp.value) != 2:
+                raise SyntaxError("wrong number of arguments")
+            return mal_macroexpand(env, exp.value[1])
         # Function call
         evaluated = eval_ast(env, exp)
         func = evaluated.value[0]
@@ -188,7 +204,7 @@ def mal_eval(env, exp: MalObject) -> MalObject:
                 if x.mal_type != MalType.SYMBOL:
                     raise SyntaxError(f"{x} is not a symbol")
                 if is_rest:
-                    new_env[x.value] = MalObject(MalType.LIST, args[i:])
+                    new_env[x.value] = MalObject(MalType.LIST, list(args[i:]))
                     break
                 if x.value == "&":
                     is_rest = True
@@ -201,3 +217,24 @@ def mal_eval(env, exp: MalObject) -> MalObject:
             exp = func.value[2]
             continue
         raise TypeError(f"{func} is not callable")
+
+
+def is_macro_call(env: Env, ast: MalObject) -> bool:
+    if ast.mal_type != MalType.LIST or len(ast.value) == 0 or ast.value[0].mal_type != MalType.SYMBOL:
+        return False
+    symbol = ast.value[0]
+    if symbol.value not in env:
+        return False
+    func = env[symbol.value]
+    if not isinstance(func, MalObject) or func.mal_type != MalType.FUNCTION:
+        return False
+    return func.is_macro_call
+
+
+def mal_macroexpand(env: Env, ast: MalObject) -> MalObject:
+    """Macroexpand ast with env."""
+    while True:
+        if not is_macro_call(env, ast):
+            return ast
+        func = env[ast.value[0].value]
+        ast = mal_apply(func, *ast.value[1:])
